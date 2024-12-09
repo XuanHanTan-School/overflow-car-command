@@ -1,3 +1,5 @@
-agora-python-sdk==3.4.2.1
+numpy==2.0.2
+opencv-python==4.10.0.84
 python-dotenv==1.0.1
 websockets==14.1
+PyGObject==3.50.0
