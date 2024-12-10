@@ -6,6 +6,7 @@ Created on Mon Jan  20 02:07:13 2019
 # import necessary argumnets 
 import gi
 import cv2
+import argparse
 
 # import required library like Gstreamer and GstreamerRtspServer
 gi.require_version('Gst', '1.0')
@@ -22,8 +23,8 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
         self.number_frames = 0
         self.fps = opt.fps
         self.duration = 1 / self.fps * Gst.SECOND  # duration of a frame in nanoseconds
-        self.launch_string = 'appsrc name=source is-live=true block=true' \
-                             'caps=video/x-raw,format=BGR,width={},height={},framerate={}/1 ' \
+        self.launch_string = 'appsrc name=source is-live=true block=true format=GST_FORMAT_TIME ' \
+                             'caps=video/x-raw,format=RGB,width={},height={},framerate={}/1 ' \
                              '! videoconvert ! video/x-raw,format=I420 ' \
                              '! x264enc speed-preset=ultrafast tune=zerolatency ' \
                              '! rtph264pay config-interval=1 name=pay0 pt=96' \
@@ -47,9 +48,9 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
                 buf.offset = timestamp
                 self.number_frames += 1
                 retval = src.emit('push-buffer', buf)
-                print('pushed buffer, frame {}, duration {} ns, durations {} s'.format(self.number_frames,
-                                                                                       self.duration,
-                                                                                       self.duration / Gst.SECOND))
+                # print('pushed buffer, frame {}, duration {} ns, durations {} s'.format(self.number_frames,
+                #                                                                        self.duration,
+                #                                                                        self.duration / Gst.SECOND))
                 if retval != Gst.FlowReturn.OK:
                     print(retval)
     # attach the launch string to the override method
@@ -83,6 +84,7 @@ class RtspManager:
 
     def start(self):
         try:
+            print("Starting RTSP streaming...")
             self.loop.run()
         except KeyboardInterrupt:
             self.stop()
@@ -93,3 +95,21 @@ class RtspManager:
         self.server.factory.cap.release()  # Release the OpenCV video capture
         Gst.deinit()
         print("Streaming stopped.")
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--device_id", required=True, help="device id for the \
+                video device or video file location")
+parser.add_argument("--fps", required=True, help="fps of the camera", type = int)
+parser.add_argument("--image_width", required=True, help="video frame width", type = int)
+parser.add_argument("--image_height", required=True, help="video frame height", type = int)
+parser.add_argument("--port", default=8554, help="port to stream video", type = int)
+opt = parser.parse_args()
+
+try:
+    opt.device_id = int(opt.device_id)
+except ValueError:
+    pass
+
+rtsp_manager = RtspManager(opt)
+rtsp_manager.start()

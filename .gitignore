@@ -1,3 +1,4 @@
 .wakatime-project
 config.env
 venv
+.DS_Store
