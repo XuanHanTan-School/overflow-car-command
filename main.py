@@ -11,7 +11,8 @@ DRIVE_CONTROL_IP = config["DRIVE_CONTROL_IP"]
 DRIVE_CONTROL_PORT = int(config["DRIVE_CONTROL_PORT"])
 SERVE_IP = config["SERVE_IP"]
 SERVE_PORT = int(config["SERVE_PORT"])
-CAR_ID = config["CAR_ID"]
+
+PASSWORD = config["PASSWORD"]
 
 RTSP_OPTIONS = {
     "device_id": config["CAM_DEVICE_ID"],
@@ -21,11 +22,21 @@ RTSP_OPTIONS = {
     "port": config["VIDEO_PORT"]
 }
 
+def generate_error_string(message):
+    return json.dumps({"type": "error", "message": message})
+
 async def handle_message(websocket):
     try:
         async for message in websocket:
             message_data = json.loads(message)
-            print(message_data)
+            if "token" not in message_data:
+                await websocket.send(generate_error_string("Token not provided."))
+                continue
+
+            if message_data["token"] != PASSWORD:
+                await websocket.send(generate_error_string("Invalid token provided."))
+                continue
+
             message_type = message_data["type"]
             if message_type == "ping":
                 await websocket.send(json.dumps({"type": "pong"}))
@@ -36,7 +47,7 @@ async def handle_message(websocket):
                     "accelerate": message_data["accelerate"]
                 }))
             else:
-                await websocket.send(json.dumps({"type": "error", "message": "Invalid message type"}))
+                await websocket.send(generate_error_string("Invalid message type"))
     except ConnectionClosedError:
         print("Connection to app closed unexpectedly.")
 

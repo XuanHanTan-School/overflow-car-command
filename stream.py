@@ -7,11 +7,16 @@ Created on Mon Jan  20 02:07:13 2019
 import gi
 import cv2
 import argparse
+from dotenv import dotenv_values
 
 # import required library like Gstreamer and GstreamerRtspServer
 gi.require_version('Gst', '1.0')
 gi.require_version('GstRtspServer', '1.0')
 from gi.repository import Gst, GstRtspServer, GLib
+
+config = dotenv_values("config.env")
+USERNAME = config["USERNAME"]
+PASSWORD = config["PASSWORD"]
 
 # Sensor Factory class which inherits the GstRtspServer base class and add
 # properties to it.
@@ -71,6 +76,20 @@ class GstServer(GstRtspServer.RTSPServer):
         self.factory.set_shared(True)
         self.set_service(str(opt.port))
         self.get_mount_points().add_factory("/video_stream", self.factory)
+
+        # Set up basic authentication
+        auth = GstRtspServer.RTSPAuth()
+        token = GstRtspServer.RTSPToken()
+        token.set_string(GstRtspServer.RTSP_TOKEN_MEDIA_FACTORY_ROLE, "user")
+        basic = GstRtspServer.RTSPAuth.make_basic(USERNAME, PASSWORD)
+        auth.add_basic(basic, token)
+        self.set_auth(auth)
+
+        permissions = GstRtspServer.RTSPPermissions()
+        permissions.add_permission_for_role("user", "media.factory.access", True)
+        permissions.add_permission_for_role("user", "media.factory.construct", True)
+        self.factory.set_permissions(permissions)
+
         self.attach(None)
 
 # Class to control RTSP thread
