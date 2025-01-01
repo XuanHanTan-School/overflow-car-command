@@ -12,7 +12,7 @@ async def handle_message(websocket):
     try:
         async for message in websocket:
             message_data = json.loads(message)
-            print(f"Angle: {message_data["angle"]} \tForward: {message_data["forward"]} \tAccelerate: {message_data["accelerate"]}")
+            print(f"Angle: {message_data["angle"]} \tAccelerate: {message_data["accelerate"]}")
     except ConnectionClosedError:
         print("Connection to command server closed unexpectedly.")
 

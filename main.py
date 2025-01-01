@@ -60,9 +60,6 @@ async def handle_message(websocket):
                     if "angle" not in message_data:
                         await websocket.send(generate_error_string("Angle not provided."))
                         continue
-                    if "forward" not in message_data:
-                        await websocket.send(generate_error_string("Forward (direction) not provided."))
-                        continue
                     if "accelerate" not in message_data:
                         await websocket.send(generate_error_string("Accelerate (pedal pressed) not provided."))
                         continue
@@ -70,16 +67,12 @@ async def handle_message(websocket):
                     if not is_int(message_data["angle"]) or not (-90 <= message_data["angle"] <= 90):
                         await websocket.send(generate_error_string("Invalid angle provided."))
                         continue
-                    if not is_bool(message_data["forward"]):
-                        await websocket.send(generate_error_string("Invalid forward (direction) provided."))
-                        continue
-                    if not is_bool(message_data["accelerate"]):
+                    if not is_int(message_data["accelerate"]) or not (-100 <= message_data["accelerate"] <= 100):
                         await websocket.send(generate_error_string("Invalid accelerate (pedal pressed) provided."))
                         continue
 
                     await drive_control.send(json.dumps({
                         "angle": message_data["angle"],
-                        "forward": message_data["forward"],
                         "accelerate": message_data["accelerate"]
                     }))
                 else:
