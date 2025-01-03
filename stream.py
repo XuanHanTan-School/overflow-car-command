@@ -6,6 +6,7 @@ Created on Mon Jan  20 02:07:13 2019
 # import necessary argumnets 
 import gi
 import cv2
+from picamera2 import Picamera2
 import argparse
 from dotenv import dotenv_values
 
@@ -24,7 +25,9 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
     def __init__(self, opt, **properties):
         super(SensorFactory, self).__init__(**properties)
         self.opt = opt
-        self.cap = cv2.VideoCapture(opt.device_id)
+        self.cap = Picamera2()
+        self.cap.configure(self.cap.still_configuration())
+        self.cap.start(show_preview=False)
         self.number_frames = 0
         self.fps = opt.fps
         self.duration = 1 / self.fps * Gst.SECOND  # duration of a frame in nanoseconds
@@ -37,8 +40,8 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
     # method to capture the video feed from the camera and push it to the
     # streaming buffer.
     def on_need_data(self, src, length):
-        if self.cap.isOpened():
-            ret, frame = self.cap.read()
+        try:
+            ret, frame = self.cap.capture_array()
             if ret:
                 # It is better to change the resolution of the camera 
                 # instead of changing the image shape as it affects the image quality.
@@ -58,6 +61,9 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
                 #                                                                        self.duration / Gst.SECOND))
                 if retval != Gst.FlowReturn.OK:
                     print(retval)
+        except:
+            print("Waiting for Pi Camera to be opened...")
+            pass
     # attach the launch string to the override method
     def do_create_element(self, url):
         return Gst.parse_launch(self.launch_string)
