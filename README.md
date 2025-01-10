@@ -2,6 +2,8 @@
 
 > WebSocket-Controlled RTSP Video Streaming and Motor Control
 
+![Cover image](media/cover.jpg)
+
 This project provides a framework to control a robotic vehicle with video streaming capabilities using WebSocket communication. It works great with the Overflow Car App, where you can use tilt gestures and a joystick to drive the car, along with a live video. It includes features such as RTSP video streaming, motor control, and authentication for secure access.
 
 ## Demo
